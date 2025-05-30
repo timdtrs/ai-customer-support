@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Chatbot</title>
+  <style>
+    /* Grundstyles und Reset */
+    body { margin: 0; font-family: system-ui, sans-serif; }
+    /* Button unten rechts */
+    #chatbot-button {
+      position: fixed;
+      bottom: 1px;
+      right: 1%;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: #007bff;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+    }
+    /* Chat-Container (verborgen, bis geöffnet) */
+    #chatbot-container {
+      position: fixed;
+      bottom: 60px;
+      right: 20px;
+      width: 320px;
+      height: 450px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    /* Header */
+    #chatbot-header {
+      padding: 12px;
+      background: #f5f5f5;
+      border-bottom: 1px solid #eee;
+      text-align: center;
+      font-weight: 600;
+    }
+    /* Nachrichtenbereich */
+    #chatbot-messages {
+    text-align: start;
+      flex: 1;
+      padding: 12px;
+      text-wrap: wrap;
+      overflow-y: auto;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+    .chatbot-message { margin-bottom: 10px; max-width: 80%; }
+    .chatbot-message.user { margin-left: auto; text-align: right; }
+    .chatbot-message.bot { margin-right: auto; text-align: left; }
+    /* Eingabefeld */
+    #chatbot-input {
+      border: none;
+      border-top: 1px solid #eee;
+      padding: 12px;
+      width: calc(100% - 24px);
+      outline: none;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Chatfenster -->
+  <div id="chatbot-container">
+    <div id="chatbot-header">Chat</div>
+    <div id="chatbot-messages"></div>
+    <input id="chatbot-input" type="text" placeholder="Frage stellen…" />
+  </div>
+
+  <!-- Button -->
+  <button id="chatbot-button">💬</button>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    // Bot-ID wird hier vom FastAPI-Server ersetzt
+    const BOT_ID = "{{bot_id}}";
+    let messageHistory = [];
+
+    // Chat-Fenster umschalten
+    function toggleChat() {
+      const c = document.getElementById("chatbot-container");
+      c.style.display = (c.style.display === "flex" ? "none" : "flex");
+    }
+    document.getElementById("chatbot-button")
+            .addEventListener("click", toggleChat);
+
+    // Chat-Logik
+    function initChatbot(botId) {
+      const input = document.getElementById("chatbot-input");
+      const msgs  = document.getElementById("chatbot-messages");
+
+      input.addEventListener("keydown", async e => {
+        if (e.key === "Enter" && input.value.trim()) {
+          const text = input.value.trim();
+          input.value = "";
+
+          // Nutzer-Nachricht anzeigen (blau umrandet)
+          const u = document.createElement("div");
+          u.className = "chatbot-message user";
+          u.innerHTML = `<span style='display:inline-block;border:2px solid #007bff;border-radius:8px;padding:8px 12px;background:#eaf3ff;color:#007bff;'>${escapeHtml(text)}</span>`;
+          msgs.appendChild(u);
+          msgs.scrollTop = msgs.scrollHeight;
+
+          // Message zur History hinzufügen
+          messageHistory.push({ role: 'user', content: text });
+
+          // Anfrage an die Bot-API
+          const res = await fetch(`http://localhost:8000/generate/embed-chat`, {
+            method: "POST",
+            headers: {"Content-Type":"application/json"},
+            body: JSON.stringify({
+              agent_id: botId,
+              query: text,
+              messages: messageHistory
+            })
+          });
+          const data = await res.json();
+          const reply = data.message || data.reply || data.response;
+
+          // Bot-Antwort als Markdown anzeigen
+          const b = document.createElement("div");
+          b.className = "chatbot-message bot";
+          b.innerHTML = marked.parse(reply || "");
+          msgs.appendChild(b);
+          msgs.scrollTop = msgs.scrollHeight;
+
+          // Bot-Antwort zur History hinzufügen
+          messageHistory.push({ role: 'assistant', content: reply });
+        }
+      });
+    }
+
+    // Hilfsfunktion für sichere HTML-Ausgabe
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.innerText = text;
+      return div.innerHTML;
+    }
+
+    // Beim Laden initialisieren
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("chatbot-container").style.display = "none";
+      document.getElementById("chatbot-container").style.flexDirection = "column";
+      initChatbot(BOT_ID);
+    });
+    </script>
+  </body>
+</html>

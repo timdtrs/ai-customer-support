@@ -1,0 +1,32 @@
+[
+  {
+    "role": "user",
+    "timestamp": "2025-05-20T09:15:00",
+    "text": "Hallo, ich habe eine Frage zu meiner Rechnung."
+  },
+  {
+    "role": "bot",
+    "timestamp": "2025-05-20T09:15:10",
+    "text": "Gerne! Was möchten Sie zur Rechnung wissen?"
+  },
+  {
+    "role": "user",
+    "timestamp": "2025-05-20T09:16:00",
+    "text": "Mir fehlt eine Position auf der Abrechnung."
+  },
+  {
+    "role": "bot",
+    "timestamp": "2025-05-20T09:16:20",
+    "text": "Könnten Sie mir bitte die Rechnungsnummer nennen?"
+  },
+  {
+    "role": "user",
+    "timestamp": "2025-05-20T09:16:35",
+    "text": "Rechnungsnummer 123456."
+  },
+  {
+    "role": "bot",
+    "timestamp": "2025-05-20T09:17:00",
+    "text": "Vielen Dank! Ich prüfe das und melde mich gleich zurück."
+  }
+]
