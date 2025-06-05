@@ -1,7 +1,8 @@
 import json
 import os
 from http import HTTPStatus
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Security
+from fastapi.security import HTTPBearer
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
@@ -10,10 +11,12 @@ from starlette.responses import Response
 from openai import OpenAI, OpenAIError
 from dotenv import load_dotenv
 from ..index.index import vector_store
+from ..utils import VerifyToken
 
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 router = APIRouter()
+auth = VerifyToken()
 
 SYSTEM_PROMPT = """
 Prompt für einen Customer-Service-Chatbot (Webseitenintegration, kurz & präzise)
@@ -48,10 +51,12 @@ class GenerateAnswerSchema(BaseModel):
 
 
 @router.post("/", dependencies=[])
-def handle_generate(data: GenerateAnswerSchema) -> Response:
+def handle_generate(
+    data: GenerateAnswerSchema, auth_result: str = Security(auth.verify)
+) -> Response:
     try:
         results = vector_store.similarity_search(data.query, k=3)
-        print(results)
+        print(auth_result)
         messages = [
             {"role": "developer", "content": SYSTEM_PROMPT},
             *data.messages,

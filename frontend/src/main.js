@@ -11,6 +11,7 @@ import PrimeVue from 'primevue/config';
 import Aura from '@primeuix/themes/aura';
 const app = createApp(App)
 
+import { createAuth0 } from '@auth0/auth0-vue';
 
 app.use(createPinia())
 app.use(router)
@@ -41,6 +42,18 @@ app.use(PrimeVue, {
     }
 }
 });
+
+app.use(
+  createAuth0({
+    domain: "dev-f35fzz3ckchm2mcv.us.auth0.com",
+    clientId: "8OVrkXOsFOvRONGVZmBfoEkncjtqYZub",
+    authorizationParams: {
+      redirect_uri: window.location.origin,
+      audience: "https://solvee-auth.com"
+
+    }
+  })
+);
 
 import Button from "primevue/button"
 import Chart from 'primevue/chart';

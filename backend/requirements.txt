@@ -8,3 +8,6 @@ langchain-qdrant
 qdrant-client
 langchain
 python-multipart
+psycopg2-binary
+python-jose
+pyjwt[crypto]

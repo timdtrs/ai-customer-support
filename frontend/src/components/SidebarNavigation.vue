@@ -35,11 +35,36 @@
         </li>
       </ul>
     </nav>
+    <div>
+      
+    
+  </div>
+  <div class="mt-auto w-full">
+        <Button class="w-full" v-if="!isAuthenticated" @click="login">Log in</Button>
+        <Button class="w-full" severity="secondary" v-else @click="logout">Log out</Button>
+      </div>
   </aside>
 </template>
 
-<script setup>
-// Keine Bootstrap- oder Vuetify-Icons mehr, nur PrimeVue Icons (pi)
+<script>
+import { useAuth0 } from '@auth0/auth0-vue';
+import { computed } from 'vue';
+
+export default {
+  setup() {
+    const { loginWithRedirect, isAuthenticated, logout } = useAuth0();
+
+    return {
+      login: () => {
+        loginWithRedirect();
+      },
+      logout: () => {
+        logout({ returnTo: window.location.origin });
+      },
+      isAuthenticated: computed(() => isAuthenticated.value),
+    };
+  }
+};
 </script>
 
 <style scoped>

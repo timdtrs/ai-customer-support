@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@auth0/auth0-vue": "^2.4.0",
     "@mdi/font": "^7.4.47",
     "@popperjs/core": "^2.11.8",
     "@primeuix/themes": "^1.1.1",

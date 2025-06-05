@@ -48,9 +48,11 @@ import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
 import { useRouter, useRoute } from 'vue-router'
 import Markdown from 'vue3-markdown-it'
+import { useAuth0 } from '@auth0/auth0-vue'
 
 const router = useRouter()
 const route = useRoute()
+const { getAccessTokenSilently } = useAuth0()
 
 const tabMenuItems = [
   { label: 'Konfigurieren', icon: 'pi pi-cog', to: '/playground/config' },
@@ -94,7 +96,12 @@ async function sendMessage() {
   if (!input.value.trim()) return
   messages.value.push({ role: 'user', content: input.value })
   try {
-    const response = await (await import('@/api/generate')).generateAnswer({ query: input.value, messages: messages.value, agent_id: "Test" })
+    const token = await getAccessTokenSilently({
+      audience: "https://solvee-auth.com",
+      ignoreCache: true
+    });
+    console.log("Token:", token);
+    const response = await (await import('@/api/generate')).generateAnswer({ query: input.value, messages: messages.value, agent_id: "Test" }, token)
     messages.value.push({ role: 'assistant', content: response.data.message })
   } catch (e) {
     messages.value.push({ role: 'system', content: 'Fehler bei der Anfrage.' })

@@ -16,8 +16,10 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - QDRANT_URL=http://qdrant:6333
       - QDRANT_API_KEY=${QDRANT_API_KEY}
+      - DATABASE_URL=postgresql+psycopg2://postgres:postgres@postgres:5432/postgres
     depends_on:
       - qdrant
+      - postgres
     ports:
       - "8000:8000"
     volumes:
@@ -38,5 +40,33 @@ services:
     environment:
       - VITE_API_URL=http://backend:8000
 
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5433:5433"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8080:80"
+    depends_on:
+      - postgres
+    networks:
+      - default
+
 volumes:
   qdrant_data:
+  pgdata:
