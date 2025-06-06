@@ -21,6 +21,38 @@ export async function indexFilesInVectorDB(files) {
 }
 
 /**
+ * Sendet Text-Einträge an das Backend zur Indizierung
+ * @param {Array<{title: string, text: string}>} texts
+ */
+export async function indexTextsInVectorDB(texts) {
+  const response = await fetch('/api/index/texts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(texts)
+  });
+  if (!response.ok) {
+    throw new Error('Fehler beim Indizieren der Texte');
+  }
+  return await response.json();
+}
+
+/**
+ * Sendet Q&A-Paare an das Backend zur Indizierung
+ * @param {Array<{title: string, question: string, answer: string}>} pairs
+ */
+export async function indexQAPairsInVectorDB(pairs) {
+  const response = await fetch('/api/index/qa', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(pairs)
+  });
+  if (!response.ok) {
+    throw new Error('Fehler beim Indizieren der Q&A-Paare');
+  }
+  return await response.json();
+}
+
+/**
  * Fragt die Liste der indizierten Dateien vom Backend ab
  * @returns {Promise<Array<{title: string, size: number, type: string}>>}
  */

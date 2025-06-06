@@ -125,7 +125,7 @@ import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 import ProgressBar from 'primevue/progressbar'
-import { indexFilesInVectorDB, getIndexedFiles, deleteIndexedFile } from '@/api/index'
+import { indexFilesInVectorDB, indexTextsInVectorDB, indexQAPairsInVectorDB, getIndexedFiles, deleteIndexedFile } from '@/api/index'
 const tab = ref('files')
 
 // FileUpload
@@ -277,15 +277,22 @@ const usedPercentAll = computed(() => Math.min(100, Math.round((usedSizeAll.valu
 // Training der Wissensbasis
 const isTraining = ref(false)
 async function trainKnowledgeBase() {
-  if (!uploadedFiles.value.length) return
+  if (!uploadedFiles.value.length && !textEntries.value.length && !qaPairs.value.length) return
   isTraining.value = true
   try {
-    await indexFilesInVectorDB(uploadedFiles.value)
-    // Nach erfolgreichem Indizieren Status auf "Indiziert" setzen
-    uploadedFiles.value.forEach(file => {
-      file.status = 'Indiziert'
-    })
-    console.log('Dateien wurden erfolgreich indiziert!')
+    if (uploadedFiles.value.length) {
+      await indexFilesInVectorDB(uploadedFiles.value)
+      uploadedFiles.value.forEach(file => {
+        file.status = 'Indiziert'
+      })
+    }
+    if (textEntries.value.length) {
+      await indexTextsInVectorDB(textEntries.value)
+    }
+    if (qaPairs.value.length) {
+      await indexQAPairsInVectorDB(qaPairs.value)
+    }
+    console.log('Wissensbasis wurde erfolgreich indiziert!')
   } catch (err) {
     console.log('Fehler beim Indizieren: ' + err.message)
   } finally {
