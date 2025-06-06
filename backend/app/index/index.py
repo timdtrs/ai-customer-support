@@ -54,7 +54,7 @@ def read_file_with_docling(file_path):
     return result.document.export_to_markdown()
 
 
-def index_text_in_vectorstore(text, filename, size=None, doc_type="file"):
+def index_text_in_vectorstore(text, filename, size=None):
     splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
     chunks = splitter.split_text(text)
     points = []
@@ -66,7 +66,7 @@ def index_text_in_vectorstore(text, filename, size=None, doc_type="file"):
                 "payload": {
                     "title": filename,
                     "size": size,
-                    "type": doc_type,
+                    "type": "file",
                     "chunk": idx,
                     "page_content": chunk,
                 },
@@ -74,17 +74,6 @@ def index_text_in_vectorstore(text, filename, size=None, doc_type="file"):
         )
     qdrant_client.upsert(collection_name="data", points=points)
     return len(chunks)
-
-
-class TextEntry(BaseModel):
-    title: str
-    text: str
-
-
-class QAPair(BaseModel):
-    title: str
-    question: str
-    answer: str
 
 
 router = APIRouter()
@@ -113,37 +102,6 @@ async def index_files(files: list[UploadFile] = File(...)) -> Response:
             contents.append({"filename": upload.filename, "error": str(e)})
     return Response(
         content=json.dumps({"files": contents}),
-        status_code=HTTPStatus.ACCEPTED,
-    )
-
-
-@router.post("/texts")
-def index_texts(entries: list[TextEntry]) -> Response:
-    contents = []
-    for entry in entries:
-        size_kb = round(len(entry.text.encode("utf-8")) / 1024)
-        num_chunks = index_text_in_vectorstore(
-            entry.text, entry.title, size=size_kb, doc_type="text"
-        )
-        contents.append({"title": entry.title, "size": size_kb, "chunks": num_chunks})
-    return Response(
-        content=json.dumps({"texts": contents}),
-        status_code=HTTPStatus.ACCEPTED,
-    )
-
-
-@router.post("/qa")
-def index_qa_pairs(pairs: list[QAPair]) -> Response:
-    contents = []
-    for pair in pairs:
-        combined = f"Frage: {pair.question}\nAntwort: {pair.answer}"
-        size_kb = round(len(combined.encode("utf-8")) / 1024)
-        num_chunks = index_text_in_vectorstore(
-            combined, pair.title, size=size_kb, doc_type="qa"
-        )
-        contents.append({"title": pair.title, "size": size_kb, "chunks": num_chunks})
-    return Response(
-        content=json.dumps({"qa": contents}),
         status_code=HTTPStatus.ACCEPTED,
     )
 
