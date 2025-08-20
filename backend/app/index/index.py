@@ -1,5 +1,5 @@
 import json
-from fastapi import APIRouter, UploadFile, File
+from fastapi import APIRouter, UploadFile, File, Security
 from fastapi.responses import JSONResponse
 import tempfile
 from http import HTTPStatus
@@ -13,6 +13,7 @@ from uuid import uuid4
 from pydantic import BaseModel
 from starlette.responses import Response
 from dotenv import load_dotenv
+from ..utils import VerifyToken
 import os
 from qdrant_client.http.models import PointIdsList
 
@@ -21,7 +22,7 @@ load_dotenv()
 embeddings = OpenAIEmbeddings(
     model="text-embedding-3-large", openai_api_key=os.getenv("OPENAI_API_KEY")
 )
-# Ersetze Chroma durch Qdrant
+
 qdrant_url = os.getenv("QDRANT_URL", "http://localhost:6333")
 qdrant_api_key = os.getenv("QDRANT_API_KEY", None)
 qdrant_client = QdrantClient(url=qdrant_url, api_key=qdrant_api_key)
@@ -33,7 +34,7 @@ if "data" not in [c.name for c in qdrant_client.get_collections().collections]:
         vectors_config={
             "size": 3072,
             "distance": "Cosine",
-        },  # 3072 für text-embedding-3-large
+        },
     )
 
 vector_store = QdrantVectorStore(
@@ -87,7 +88,8 @@ class QAPair(BaseModel):
     answer: str
 
 
-router = APIRouter()
+auth = VerifyToken()
+router = APIRouter(dependencies=[Security(auth.verify)])
 
 
 @router.post("/files")

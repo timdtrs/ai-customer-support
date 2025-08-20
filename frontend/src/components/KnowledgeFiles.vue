@@ -32,6 +32,7 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
 import { indexFilesInVectorDB, getIndexedFiles, deleteIndexedFile } from '@/api/index'
+import { useAuth0 } from '@auth0/auth0-vue'
 
 const uploadedFiles = defineModel('uploadedFiles', { type: Array, required: true })
 const deleteFiles = defineModel('deleteFiles', { type: Array, required: true })
@@ -50,10 +51,13 @@ function handleFileUploadPrime(event) {
 }
 
 async function removeSelectedFiles() {
+  const token = await getAccessTokenSilently({
+    audience: import.meta.env.VITE_AUTH0_AUDIENCE,
+  }).catch(() => null)
   for (const file of deleteFiles.value) {
     if (file.status === 'Indiziert') {
       try {
-        await deleteIndexedFile(file.name)
+        await deleteIndexedFile(file.name, token)
       } catch (e) {
         console.log('Fehler beim Löschen aus dem Vektorstore:', e)
       }
@@ -65,7 +69,10 @@ async function removeSelectedFiles() {
 
 onMounted(async () => {
   try {
-    const indexed = await getIndexedFiles();
+    const token = await getAccessTokenSilently({
+      audience: import.meta.env.VITE_AUTH0_AUDIENCE,
+    }).catch(() => null)
+    const indexed = await getIndexedFiles(token);
     uploadedFiles.value.forEach(file => {
       const found = indexed.find(f => f.title === file.name)
       if (found) file.status = 'Indiziert'
@@ -80,6 +87,7 @@ onMounted(async () => {
           file: null
         })
       }
+const { getAccessTokenSilently } = useAuth0()
     })
   } catch (e) {
     // Fehlerbehandlung optional

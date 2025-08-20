@@ -3,7 +3,7 @@ import os
 from http import HTTPStatus
 from fastapi import APIRouter, HTTPException, Security
 from fastapi.security import HTTPBearer
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from pydantic import BaseModel
@@ -56,7 +56,7 @@ def handle_generate(
 ) -> Response:
     try:
         results = vector_store.similarity_search(data.query, k=3)
-        print(auth_result)
+
         messages = [
             {"role": "developer", "content": SYSTEM_PROMPT},
             *data.messages,
@@ -66,17 +66,20 @@ def handle_generate(
             },
         ]
 
-        response = client.responses.create(
-            model="gpt-4o-mini",
-            instructions=SYSTEM_PROMPT,
-            store=False,
-            temperature=0.3,
-            input=messages,
-        )
-        return Response(
-            content=json.dumps({"message": response.output_text}),
-            status_code=HTTPStatus.ACCEPTED,
-        )
+        def stream_openai():
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=messages,
+                stream=True,
+                temperature=0.3,
+            )
+            for chunk in response:
+                if hasattr(chunk, "choices") and chunk.choices:
+                    delta = chunk.choices[0].delta
+                    if hasattr(delta, "content") and delta.content:
+                        yield delta.content
+
+        return StreamingResponse(stream_openai(), media_type="text/plain")
     except OpenAIError as e:
         raise HTTPException(
             status_code=HTTPStatus.BAD_GATEWAY, detail=f"OpenAI API Fehler: {str(e)}"
@@ -88,8 +91,8 @@ def handle_generate(
         )
 
 
-@router.post("/embed-chat", dependencies=[])
-def handle_generate_embed(data: GenerateAnswerSchema) -> Response:
+@router.post("/embed-chat")
+def handle_generate_embed(data: GenerateAnswerSchema, auth_result: str = Security(auth.verify)) -> Response:
     try:
         results = vector_store.similarity_search(data.query, k=3)
         messages = [

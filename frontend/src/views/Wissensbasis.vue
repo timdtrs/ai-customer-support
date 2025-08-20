@@ -126,7 +126,9 @@ import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 import ProgressBar from 'primevue/progressbar'
 import { indexFilesInVectorDB, indexTextsInVectorDB, indexQAPairsInVectorDB, getIndexedFiles, deleteIndexedFile } from '@/api/index'
+import { useAuth0 } from '@auth0/auth0-vue'
 const tab = ref('files')
+const { getAccessTokenSilently } = useAuth0()
 
 // FileUpload
 const uploadedFiles = ref([])
@@ -280,17 +282,20 @@ async function trainKnowledgeBase() {
   if (!uploadedFiles.value.length && !textEntries.value.length && !qaPairs.value.length) return
   isTraining.value = true
   try {
+    const token = await getAccessTokenSilently({
+      audience: import.meta.env.VITE_AUTH0_AUDIENCE,
+    })
     if (uploadedFiles.value.length) {
-      await indexFilesInVectorDB(uploadedFiles.value)
+      await indexFilesInVectorDB(uploadedFiles.value, token)
       uploadedFiles.value.forEach(file => {
         file.status = 'Indiziert'
       })
     }
     if (textEntries.value.length) {
-      await indexTextsInVectorDB(textEntries.value)
+      await indexTextsInVectorDB(textEntries.value, token)
     }
     if (qaPairs.value.length) {
-      await indexQAPairsInVectorDB(qaPairs.value)
+      await indexQAPairsInVectorDB(qaPairs.value, token)
     }
     console.log('Wissensbasis wurde erfolgreich indiziert!')
   } catch (err) {
@@ -303,7 +308,10 @@ async function trainKnowledgeBase() {
 // Beim Laden der Komponente indizierte Dateien abrufen
 onMounted(async () => {
   try {
-    const indexed = await getIndexedFiles();
+    const token = await getAccessTokenSilently({
+      audience: import.meta.env.VITE_AUTH0_AUDIENCE,
+    }).catch(() => null)
+    const indexed = await getIndexedFiles(token);
     // Setze Status für bereits indizierte Dateien
     uploadedFiles.value.forEach(file => {
       const found = indexed.find(f => f.title === file.name)

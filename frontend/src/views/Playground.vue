@@ -95,16 +95,25 @@ const messagesEnd = ref(null)
 async function sendMessage() {
   if (!input.value.trim()) return
   messages.value.push({ role: 'user', content: input.value })
+  const assistantMsg = { role: 'assistant', content: '' }
+  messages.value.push(assistantMsg)
   try {
     const token = await getAccessTokenSilently({
-      audience: "https://solvee-auth.com",
+      audience: import.meta.env.VITE_AUTH0_AUDIENCE,
       ignoreCache: true
     });
     console.log("Token:", token);
-    const response = await (await import('@/api/generate')).generateAnswer({ query: input.value, messages: messages.value, agent_id: "Test" }, token)
-    messages.value.push({ role: 'assistant', content: response.data.message })
+    await (await import('@/api/generate')).generateAnswer(
+      { query: input.value, messages: messages.value, agent_id: "Test" },
+      token,
+      (chunk) => {
+        assistantMsg.content += chunk
+        messages.value = [...messages.value] // Trigger reactivity
+        scrollToEnd()
+      }
+    )
   } catch (e) {
-    messages.value.push({ role: 'system', content: 'Fehler bei der Anfrage.' })
+    assistantMsg.content = 'Fehler bei der Anfrage.'
   }
   input.value = ''
   scrollToEnd()

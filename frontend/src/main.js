@@ -14,7 +14,6 @@ const app = createApp(App)
 import { createAuth0 } from '@auth0/auth0-vue';
 
 app.use(createPinia())
-app.use(router)
 
 const MyPreset = definePreset(Aura, {
     semantic: {
@@ -43,17 +42,21 @@ app.use(PrimeVue, {
 }
 });
 
+// Install Auth0 before router so guards can access it
 app.use(
   createAuth0({
-    domain: "dev-f35fzz3ckchm2mcv.us.auth0.com",
-    clientId: "8OVrkXOsFOvRONGVZmBfoEkncjtqYZub",
+    domain: import.meta.env.VITE_AUTH0_DOMAIN,
+    clientId: import.meta.env.VITE_AUTH0_CLIENT_ID,
     authorizationParams: {
       redirect_uri: window.location.origin,
-      audience: "https://solvee-auth.com"
-
-    }
+      audience: import.meta.env.VITE_AUTH0_AUDIENCE,
+    },
+    cacheLocation: 'localstorage',
+    useRefreshTokens: true,
   })
 );
+
+app.use(router)
 
 import Button from "primevue/button"
 import Chart from 'primevue/chart';
