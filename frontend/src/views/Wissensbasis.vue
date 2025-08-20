@@ -279,7 +279,7 @@ const usedPercentAll = computed(() => Math.min(100, Math.round((usedSizeAll.valu
 // Training der Wissensbasis
 const isTraining = ref(false)
 async function trainKnowledgeBase() {
-  if (!uploadedFiles.value.length && !textEntries.value.length && !qaPairs.value.length) return
+  if (!uploadedFiles.value.length) return
   isTraining.value = true
   try {
     const token = await getAccessTokenSilently({
