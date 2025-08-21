@@ -84,14 +84,4 @@ Hinweis: Frontend spricht das Backend über den Vite‑Proxy unter `/api` an. Zi
 
   ![Wissensbasis](docs/screenshots/wissensbasis.png)
 
-## Screenshots einfügen
-- Ablage: Lege Screenshots im Repo unter `docs/screenshots/` ab.
-- Benennung: `YYYY-MM-DD-kurze-beschreibung.png` (klein, keine Leerzeichen).
-- Einbinden in Markdown (z. B. in dieser README):
 
-  ```md
-  ![Feature-Ansicht](docs/screenshots/2025-08-21-feature-ansicht.png)
-  ```
-
-- Alt-Text: Kurz beschreiben, was zu sehen ist (Barrierefreiheit).
-- Größe: Bilder nach Möglichkeit komprimieren, um das Repo schlank zu halten.
