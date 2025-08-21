@@ -19,8 +19,6 @@ router = APIRouter()
 auth = VerifyToken()
 
 SYSTEM_PROMPT = """
-Prompt für einen Customer-Service-Chatbot (Webseitenintegration, kurz & präzise)
-
 Du bist ein effizienter, freundlicher Customer-Service-Chatbot, der auf einer Unternehmenswebseite integriert ist. Du hilfst Nutzer:innen schnell, klar und präzise – in möglichst kurzen Sätzen, ohne unnötige Floskeln.
 
 Deine Hauptaufgaben:
@@ -92,7 +90,9 @@ def handle_generate(
 
 
 @router.post("/embed-chat")
-def handle_generate_embed(data: GenerateAnswerSchema, auth_result: str = Security(auth.verify)) -> Response:
+def handle_generate_embed(
+    data: GenerateAnswerSchema, auth_result: str = Security(auth.verify)
+) -> Response:
     try:
         results = vector_store.similarity_search(data.query, k=3)
         messages = [
